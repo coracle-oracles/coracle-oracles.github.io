@@ -10796,3 +10796,9 @@ header.masthead .post-heading .meta a {
     font-size: 2.25rem;
   }
 }
+
+/* Custom additions for Coracle */
+.nav-item .btn-secondary {
+  background-color: transparent;
+  border-color: transparent;
+}
