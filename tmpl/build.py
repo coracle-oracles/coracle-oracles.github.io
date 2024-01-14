@@ -2,7 +2,6 @@
 
 import os
 import string
-import textwrap
 
 def build(template, page_path):
     new_arg = True
@@ -25,8 +24,6 @@ def build(template, page_path):
                 else:
                     value_buf.append(line)
         template_vars[key] = "\n".join(value_buf)
-
-    template_vars["content"] = textwrap.indent(template_vars["content"], "    " * 6)
 
     return template.substitute(template_vars)
 
