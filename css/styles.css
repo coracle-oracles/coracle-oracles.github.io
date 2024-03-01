@@ -10663,7 +10663,6 @@ footer {
   padding-top: 3rem;
   padding-bottom: 3rem;
 }
-
 header.masthead {
   position: relative;
   margin-bottom: 3rem;
@@ -10681,8 +10680,6 @@ header.masthead:before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #212529;
-  opacity: 0.5;
 }
 header.masthead .page-heading,
 header.masthead .post-heading,
@@ -10798,4 +10795,8 @@ header.masthead .post-heading .meta a {
 .nav-item .btn-secondary {
   background-color: transparent;
   border-color: transparent;
+}
+header.translucent-masthead:before {
+  background-color: #212529;
+  opacity: 0.5;
 }
