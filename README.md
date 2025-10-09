@@ -10,4 +10,8 @@ This is a simple static website so that it can be deployed on Github pages, but 
 
 ## Previewing changes
 
-After rebuilding, you can preview the changes by cding to the repo root and running `python3 -m http.server`. Then direct your browser to `localhost:8000`.
+After rebuilding, you can preview the changes by cding to the repo root and running `python3 -m http.server`. Then direct your browser to `http://localhost:8000`.
+
+## Deploying
+
+Just `git push` to github. After a minute or so, the changes should be up!
