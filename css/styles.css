@@ -10801,3 +10801,6 @@ header.translucent-masthead:before {
   background-color: #212529;
   opacity: 0.5;
 }
+.center {
+  text-align: center;
+}
