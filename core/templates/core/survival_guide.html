@@ -1,16 +1,15 @@
-title
-Coracle: Survival Guide
----
-head_img
-img/hero1.jpg
----
-head_content
-<h1>Survival Guide</h1>
----
-head_extra_classes
-translucent-masthead
----
-content
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Coracle: Survival Guide{% endblock %}
+
+{% block head_img %}{% static 'img/hero1.jpg' %}{% endblock %}
+
+{% block head_extra_classes %}translucent-masthead{% endblock %}
+
+{% block head_content %}<h1>Survival Guide</h1>{% endblock %}
+
+{% block content %}
 <h2 class="section-heading">About the Venue</h2>
 
 <p>Coracle is being held at Shakori Hills Community Arts Center in Pittsboro,
@@ -42,7 +41,7 @@ you under the age of 18.</p>
 
 <p>We strive to make Coracle a safe and beautiful experience for every
 participant. It is your responsibility to make sure you are not on any other
-regional’s ban list. If you are on any regional burn banned list you will be
+regional's ban list. If you are on any regional burn banned list you will be
 denied entry and you will not get a refund.</p>
 
 <h2 class="section-heading">General Survival</h2>
@@ -79,13 +78,13 @@ necessary.</p>
 
 <h2 class="section-heading">Rangers</h2>
 
-<p>Coracle is starting a Ranger program this year! The Rangers are burners who help participants and staff work through problems and make everyone’s Burn awesomer. Rangers only assist the community when needed. Our ideal outcome is to have people solve our own problems with a gentle nudge in the right direction, and then fade into the background when we’re not needed.</p>
+<p>Coracle is starting a Ranger program this year! The Rangers are burners who help participants and staff work through problems and make everyone's Burn awesomer. Rangers only assist the community when needed. Our ideal outcome is to have people solve our own problems with a gentle nudge in the right direction, and then fade into the background when we're not needed.</p>
 
 <h2 class="section-heading">Covid</h2>
 
 <p>Do whatever you can to engage safely with the Coracle community! We
 recommend getting a COVID-19 vaccine before Coracle and testing before
-you arrive. While at Coracle if you feel sick or think you’ve been exposed,
+you arrive. While at Coracle if you feel sick or think you've been exposed,
 please test and quarantine yourself if you test positive. We strongly
 recommend wearing a mask and/or social distancing.</p>
 
@@ -103,7 +102,7 @@ on their website here.</p>
 
 <p>There are real sinks with warm water and hand soap in the bathrooms
 on-site centrally located at Shakori Hills Community Arts Center. Carrying
-(and using) hand sanitizer is a good start, but there’s no substitute for
+(and using) hand sanitizer is a good start, but there's no substitute for
 washing with soap and running water for at least 20 seconds as the most
 effective way to reduce coronavirus and other contamination on the hands.
 Please wash your hands!</p>
@@ -113,7 +112,7 @@ Please wash your hands!</p>
 <p>We are lucky to have drinking water stations that provide cold well water.
 Please bring a refillable container. There are warm showers and running
 water bathrooms on site. The bathrooms are on a septic tank. To allow the septic tank to settle and breakdown the septics, the bathrooms will be closed every night from 10pm to 6am. This will ensure the septics tank doesn't overflow during the duration of the event. Portos are also provided for your convenience;
-don’t put items in a porto that you wouldn’t flush at home. Only toilet
+don't put items in a porto that you wouldn't flush at home. Only toilet
 paper down the toilets and portos (NO WIPES).</p>
 
 <p>Please bring a bucket/camping potty/pee jug if you or your family are not
@@ -126,8 +125,8 @@ campsite.</p>
 <p>You should plan to bring whatever delicious delights you would like to
 enjoy at Coracle.</p>
 
-<p>If you are sharing food, disclose the ingredients, as one person’s innocuous
-ingredient can be someone else’s allergy.</p>
+<p>If you are sharing food, disclose the ingredients, as one person's innocuous
+ingredient can be someone else's allergy.</p>
 
 <p>You can also bring grills and camping stoves. There is no refrigeration
 available, but a simple cooler should do given the fall chill. All food waste
@@ -158,10 +157,10 @@ of all ages are welcome, however anyone under 18 years of age must be
 accompanied by a ticketed parent or legal guardian. Children 12 and under
 are admitted for free but must be registered either online or at the gate
 when you check-in. You are responsible for the safety and well-being of
-any minor under the age of 18 that you bring to Coracle. Don’t assume your
-kids will be safe in someone else’s camp. It’s up to you to be aware of what
+any minor under the age of 18 that you bring to Coracle. Don't assume your
+kids will be safe in someone else's camp. It's up to you to be aware of what
 is happening and determine what is safe. Children need supervision and
-protection at all times. Don’t ever turn your children loose without
+protection at all times. Don't ever turn your children loose without
 supervision.</p>
 
 <h2 class="section-heading">Lost Child</h2>
@@ -208,7 +207,7 @@ immediately.</p>
 
 <h2 class="section-heading">Camping</h2>
 
-<p>There are several open camping areas on site as well as spaces for RV’s.
+<p>There are several open camping areas on site as well as spaces for RV's.
 Please be sure to purchase a Car Pass for each vehicle and an RV pass for
 your RV or trailer in advance. There are no RV hookups available onsite.
 Upon arrival participants will be able to drive to their campsite to unload,
@@ -216,12 +215,12 @@ and then return to the parking area for the duration of the event, unless
 you have arrived after dark. In that case, you will need to park in the
 parking lot and cart or carry your personal items to your camping area.</p>
 
-<p>Fires aren’t permitted in individual campsites due to tree cover, please
+<p>Fires aren't permitted in individual campsites due to tree cover, please
 enjoy fires in the designated area or that have been approved by fire safety.</p>
 
 <h2 class="section-heading">Vehicle Access and Traffic</h2>
 
-<p>A critical component of the Shakori Hills Community Art Center’s mission
+<p>A critical component of the Shakori Hills Community Art Center's mission
 is to preserve the green space of its 72 acre Chatham county homestead.
 Required vehicle travel is limited to the paths, with minimal vehicles
 allowed in grassy areas. We limit parking to the fullest extent possible.</p>
@@ -313,7 +312,7 @@ safety of all participants.</p>
 <h2 class="section-heading">Weather and Temperature</h2>
 
 <p>The average temperature the weekend of Coracle (Nov. 8-11, 2024) ranges
-from 63° during the day and 37° at night, the temperature at night has
+from 63 degrees during the day and 37 degrees at night, the temperature at night has
 gotten as low as 26 degrees. Please bring very warm bedding and coats to
 stay warm during the chilly evening temperatures. It often rains at
 Coracle. Be prepared with rain gear including rain boots and jackets. Hand
@@ -331,10 +330,10 @@ warmers and foot warmers are recommended.</p>
     <li>Stay out of puddles, especially those with power cords and generators in them.</li>
     <li>Cover or secure anything electrical.</li>
     <li>With power off, use wood blocks to elevate power connections out of standing water and seal connections with electrical tape.</li>
-    <li>Don’t operate generators or other electrically powered instruments that are standing in water.</li>
+    <li>Don't operate generators or other electrically powered instruments that are standing in water.</li>
     <li>Keep flammable liquid containers and flammable gas containers above water level.</li>
-    <li>Check on your campmates and also check on your neighbors to make sure they’re prepared (or help prep their camp if they don’t appear to be there).</li>
-    <li>Don’t drive in wet areas — emergency vehicles are an exception.</li>
+    <li>Check on your campmates and also check on your neighbors to make sure they're prepared (or help prep their camp if they don't appear to be there).</li>
+    <li>Don't drive in wet areas - emergency vehicles are an exception.</li>
 </ul>
 </p>
 
@@ -349,8 +348,8 @@ and once you get home.</p>
 
 <p>At any burn we must remind ourselves to get consent when interacting
 with others whether it be for a hug, offering a drink, etc. This goes even
-further than a sexual aspect. With enthusiastic consent, it’s either a HECK
-YES or it’s a NO. So, please be absolutely sure that you have a resounding
+further than a sexual aspect. With enthusiastic consent, it's either a HECK
+YES or it's a NO. So, please be absolutely sure that you have a resounding
 YES from any other participants before doing anything that involves them,
 or you will be asked to leave Coracle Regional Burn immediately with no
 refund.</p>
@@ -362,13 +361,13 @@ recording any participants at Coracle. Ask for consent.</p>
 
 <h2 class="section-heading">Gifts</h2>
 
-<p>Disclose what is in your gifts, even if it’s just essential oils. Some people
+<p>Disclose what is in your gifts, even if it's just essential oils. Some people
 have sensitivities or allergies.</p>
 
 <h2 class="section-heading">Protect Your Belongings</h2>
 
 <p>Secure your valuables, especially on Saturday night. Consider locking
-valuables in your car. Tip: Make two spare house and door keys — hide one
+valuables in your car. Tip: Make two spare house and door keys - hide one
 and carry one.</p>
 
 <p>Suggestions of what to bring:
@@ -410,3 +409,4 @@ and carry one.</p>
 </p>
 
 <p>If you have any questions feel free to ask us by emailing coracleoracles at gmail. See you soon!</p>
+{% endblock %}

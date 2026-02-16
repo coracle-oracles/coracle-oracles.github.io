@@ -1,1 +1,18 @@
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# Django
+db.sqlite3
+*.log
+
+# uv
+.python-version

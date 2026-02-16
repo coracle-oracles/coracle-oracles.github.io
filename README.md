@@ -1,17 +1,57 @@
 # Coracle website
 
-## Update instructions
+A Django website for the Coracle Regional Burn.
 
-This is a simple static website so that it can be deployed on Github pages, but the pages are generated with a build script because I got tired of updating the same stuff (like menus) on multiple pages. To make a change, DON'T change the html files in the repo root. Instead:
+## Setup
 
-1) Modify the files in the `tmpl` directory. `_template.html` contains the stuff shared between all pages.
+This project uses [uv](https://docs.astral.sh/uv/) for package management.
 
-2) While in the `tmpl` directory, run `./build.py`. This should work on any system with a modern-ish python3 installed.
+1. Install uv if you haven't already:
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
 
-## Previewing changes
+2. Install dependencies:
+   ```bash
+   uv sync
+   ```
 
-After rebuilding, you can preview the changes by cding to the repo root and running `python3 -m http.server`. Then direct your browser to `http://localhost:8000`.
+3. Run migrations:
+   ```bash
+   uv run python manage.py migrate
+   ```
 
-## Deploying
+## Development
 
-Just `git push` to github. After a minute or so, the changes should be up!
+Run the development server:
+```bash
+uv run python manage.py runserver
+```
+
+Then visit http://localhost:8000 in your browser.
+
+## Project Structure
+
+- `config/` - Django project settings
+- `core/` - Main Django app with views and templates
+- `staticfiles/` - Static assets (CSS, JS, images, documents)
+  - `css/` - Stylesheets
+  - `js/` - JavaScript files
+  - `img/` - Images
+  - `doc/` - PDF documents
+
+## Making Changes
+
+1. Edit templates in `core/templates/core/`
+2. Base template with navigation and footer is in `base.html`
+3. Page-specific templates extend the base template
+
+## Production Deployment
+
+For production, you'll need to:
+
+1. Set `DEBUG = False` in settings
+2. Configure `ALLOWED_HOSTS`
+3. Set a proper `SECRET_KEY` (use environment variable)
+4. Run `uv run python manage.py collectstatic`
+5. Configure a production web server (gunicorn, nginx, etc.)

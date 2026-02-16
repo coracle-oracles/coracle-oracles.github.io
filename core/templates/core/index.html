@@ -1,19 +1,14 @@
-title
-Coracle
----
-head_img
-img/banner.jpg
----
-head_content
+{% extends 'core/base.html' %}
+{% load static %}
 
----
-head_extra_classes
+{% block title %}Coracle{% endblock %}
 
----
-content
+{% block head_img %}{% static 'img/banner.jpg' %}{% endblock %}
+
+{% block content %}
 <p class="center">Coracle Regional Burn</p>
 
-<p class="center"><img src="https://www.coracleburn.com/img/Coracle-BurningMan-Logo-black.png" width="200" alt="Coracle" /></p>
+<p class="center"><img src="{% static 'img/Coracle-BurningMan-Logo-black.png' %}" width="200" alt="Coracle" /></p>
 
 <p class="center"><a target="_blank" href="https://www.geodesictraveler.coop/coracle/">Enter Here</a></p>
 
@@ -26,3 +21,4 @@ content
 <p>The word Coracle means a small round boat woven together. We communally weave a weekend of celebration, holding everyone's gifts. You are invited!</p>
 
 <p>Join the <a target="_blank" href="http://eepurl.com/ikw7jP">Coracle email list</a> to stay apprised of all things Coracle. Please direct any questions or concerns to coracleoracles (at) gmail (dot) com.</p>
+{% endblock %}
