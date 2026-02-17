@@ -17,7 +17,7 @@
         <!-- Navigation-->
         <nav class="navbar navbar-expand-lg navbar-dark" id="mainNav">
             <div class="container px-4 px-lg-5">
-                <a class="navbar-brand collapse navbar-collapse" href="{% url 'plugins:coracle_plugin:home' %}">
+                <a class="navbar-brand collapse navbar-collapse" href="{% url 'home' %}">
                     <img src="{% static 'img/logo-small.png' %}" width="100" height="100" alt="Coracle" />
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,7 +27,7 @@
                 <div class="collapse navbar-collapse" id="navbarResponsive">
                     <ul class="navbar-nav ms-auto py-4 py-lg-0">
                         <li class="nav-item">
-                            <a href="{% url 'plugins:coracle_plugin:home' %}" class="btn btn-secondary" type="button">
+                            <a href="{% url 'home' %}" class="btn btn-secondary" type="button">
                                 Home
                             </a>
                         </li>
@@ -76,8 +76,8 @@
                                     Acculturation
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{% url 'plugins:coracle_plugin:principles' %}">10 principles</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'plugins:coracle_plugin:survival_guide' %}">Survival guide</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'principles' %}">10 principles</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'survival_guide' %}">Survival guide</a></li>
                                 </ul>
                             </div>
                         </li>

@@ -5,11 +5,8 @@ description = "Coracle Regional Burn website"
 requires-python = ">=3.10,<3.14"
 dependencies = []
 
-[project.entry-points."pretix.plugin"]
-coracle = "coracle_plugin:CoraclePluginConfig"
-
 [tool.setuptools]
-packages = ["coracle_plugin"]
+packages = ["coracle", "coracle_pages"]
 
 [tool.uv]
 # pretix is installed from local subtree

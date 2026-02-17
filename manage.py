@@ -11,7 +11,7 @@ sys.path.insert(0, str(BASE_DIR / 'pretix' / 'src'))
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pretix.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'coracle.settings')
     os.environ.setdefault('PRETIX_CONFIG_FILE', str(BASE_DIR / 'pretix.cfg'))
     try:
         from django.core.management import execute_from_command_line
