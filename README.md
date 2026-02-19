@@ -30,22 +30,6 @@ uv run python manage.py runserver
 
 Then visit http://localhost:8000 in your browser.
 
-## Project Structure
-
-- `config/` - Django project settings
-- `core/` - Main Django app with views and templates
-- `staticfiles/` - Static assets (CSS, JS, images, documents)
-  - `css/` - Stylesheets
-  - `js/` - JavaScript files
-  - `img/` - Images
-  - `doc/` - PDF documents
-
-## Making Changes
-
-1. Edit templates in `core/templates/core/`
-2. Base template with navigation and footer is in `base.html`
-3. Page-specific templates extend the base template
-
 ## Production Deployment
 
 For production, you'll need to:
