@@ -3,7 +3,9 @@ name = "coracle"
 version = "0.1.0"
 description = "Coracle Regional Burn website"
 requires-python = ">=3.10,<3.14"
-dependencies = []
+dependencies = [
+    "pretix",
+]
 
 [tool.setuptools]
 packages = ["coracle", "coracle_pages"]
