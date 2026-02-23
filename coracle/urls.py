@@ -49,6 +49,7 @@ presale_patterns_main = [
 # Coracle custom pages
 coracle_patterns = [
     path('', views.home, name='home'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     path('survival-guide/', views.survival_guide, name='survival_guide'),
     path('10-principles/', views.principles, name='principles'),
     path('ticket-info/', views.ticket_info, name='ticket_info'),
