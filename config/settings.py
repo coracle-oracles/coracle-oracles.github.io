@@ -130,3 +130,32 @@ LOGOUT_REDIRECT_URL = 'home'
 
 # Email backend (console for development - prints emails to terminal)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Stripe settings
+# Replace these with your actual Stripe keys
+STRIPE_PUBLISHABLE_KEY = '...'
+STRIPE_SECRET_KEY = '...'
+STRIPE_WEBHOOK_SECRET = '...'
+
+# Ticket products configuration
+# Each product needs a Stripe Price ID from your Stripe dashboard
+TICKET_PRODUCTS = {
+    'adult_ticket': {
+        'name': 'Adult Ticket',
+        'description': 'General admission for adults',
+        'price': 19000,
+        'stripe_price_id': 'price_1Ph2afK9GOXEfTNqpXo4yCHW',
+    },
+    'child_ticket': {
+        'name': 'Child Ticket',
+        'description': 'General admission for children (12 and under)',
+        'price': 8500,
+        'stripe_price_id': 'price_1Ph37UK9GOXEfTNq4Wi3wQKQ',
+    },
+    'vehicle_pass': {
+        'name': 'Vehicle Pass',
+        'description': 'Parking pass for one vehicle',
+        'price': 1500,
+        'stripe_price_id': 'price_1PovwqK9GOXEfTNqFOENLe8Y',
+    },
+}

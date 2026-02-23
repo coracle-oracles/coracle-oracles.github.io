@@ -5,4 +5,5 @@ description = "Coracle Regional Burn website"
 requires-python = ">=3.12"
 dependencies = [
     "django>=5.1",
+    "stripe>=14.3.0",
 ]

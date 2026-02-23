@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Payment Successful - Coracle{% endblock %}
+
+{% block head_content %}
+<h1>Thank You!</h1>
+<span class="subheading">Your payment was successful</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="alert alert-success mb-4">
+            <h4 class="alert-heading">Payment Complete</h4>
+            <p class="mb-0">Your ticket purchase has been confirmed. You will receive a confirmation email shortly.</p>
+        </div>
+
+        <p class="lead">We can't wait to see you at Coracle!</p>
+
+        <div class="mt-4">
+            <a href="{% url 'home' %}" class="btn btn-primary btn-lg">Return to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

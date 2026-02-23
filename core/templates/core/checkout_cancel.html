@@ -1,0 +1,26 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Payment Cancelled - Coracle{% endblock %}
+
+{% block head_content %}
+<h1>Payment Cancelled</h1>
+<span class="subheading">Your checkout was not completed</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="alert alert-warning mb-4">
+            <h4 class="alert-heading">Checkout Cancelled</h4>
+            <p class="mb-0">Your payment was not processed. No charges have been made.</p>
+        </div>
+
+        <p>If you experienced any issues or have questions, please contact us.</p>
+
+        <div class="mt-4">
+            <a href="{% url 'tickets' %}" class="btn btn-primary btn-lg me-2">Try Again</a>
+            <a href="{% url 'home' %}" class="btn btn-secondary btn-lg">Return to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

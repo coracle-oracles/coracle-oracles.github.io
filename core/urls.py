@@ -34,4 +34,11 @@ urlpatterns = [
     path('password-reset-complete/',
          PasswordResetCompleteView.as_view(template_name='core/password_reset_complete.html'),
          name='password_reset_complete'),
+
+    # Tickets
+    path('tickets/', views.tickets, name='tickets'),
+    path('checkout/create-session/', views.create_checkout_session, name='create_checkout_session'),
+    path('checkout/success/', views.checkout_success, name='checkout_success'),
+    path('checkout/cancel/', views.checkout_cancel, name='checkout_cancel'),
+    path('webhook/stripe/', views.stripe_webhook, name='stripe_webhook'),
 ]
