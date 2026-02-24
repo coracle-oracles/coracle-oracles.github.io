@@ -7,6 +7,8 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
+from django.db.models import Count
+
 from .enums import TicketType
 from .forms import CustomUserCreationForm
 from .models import Order
@@ -46,8 +48,21 @@ def ticket_info(request):
 @login_required
 def tickets(request):
     """Display ticket selection page."""
+    existing_counts = dict(
+        Order.objects.filter(
+            owning_user=request.user,
+            status__in=['completed', 'pending'],
+        ).values_list('ticket_type').annotate(count=Count('id'))
+    )
+    ticket_data = []
+    for ticket_type in TicketType:
+        existing = existing_counts.get(ticket_type.value, 0)
+        ticket_data.append({
+            'type': ticket_type,
+            'remaining': max(0, ticket_type.max_per_user - existing),
+        })
     return render(request, 'core/tickets.html', {
-        'ticket_types': list(TicketType),
+        'ticket_data': ticket_data,
         'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
     })
 
@@ -72,6 +87,31 @@ def create_checkout_session(request):
     if not line_items:
         messages.error(request, 'Please select at least one ticket.')
         return redirect('tickets')
+
+    # Check ticket limits per user
+    existing_counts = dict(
+        Order.objects.filter(
+            owning_user=request.user,
+            status__in=['completed', 'pending'],
+        ).values('ticket_type').annotate(count=Count('id')).values_list('ticket_type', 'count')
+    )
+
+    requested_counts = {}
+    for ticket_type in tickets_to_create:
+        requested_counts[ticket_type.value] = requested_counts.get(ticket_type.value, 0) + 1
+
+    for ticket_type in TicketType:
+        existing = existing_counts.get(ticket_type.value, 0)
+        requested = requested_counts.get(ticket_type.value, 0)
+        limit = ticket_type.max_per_user
+        if existing + requested > limit:
+            remaining = max(0, limit - existing)
+            messages.error(
+                request,
+                f'You can only have {limit} {ticket_type.label.lower()}s. '
+                f'You already have {existing}, so you can only purchase {remaining} more.'
+            )
+            return redirect('tickets')
 
     # Create Stripe Checkout session
     checkout_session = stripe.checkout.Session.create(

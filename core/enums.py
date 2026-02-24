@@ -40,3 +40,12 @@ class TicketType(str, Enum):
             TicketType.CHILD: settings.TICKET_PRICE_TEENAGER,
             TicketType.VEHICLE: settings.TICKET_PRICE_VEHICLE_PASS,
         }[self]
+
+    @property
+    def max_per_user(self):
+        """Maximum number of this ticket type a user can own."""
+        return {
+            TicketType.ADULT: 4,
+            TicketType.CHILD: 4,
+            TicketType.VEHICLE: 2,
+        }[self]
