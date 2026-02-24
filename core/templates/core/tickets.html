@@ -18,19 +18,19 @@
                     <h5 class="mb-0">Available Tickets</h5>
                 </div>
                 <div class="card-body">
-                    {% for ticket in ticket_data %}
+                    {% for item in ticket_data %}
                     <div class="row align-items-center mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
                         <div class="col-md-6">
-                            <h6 class="mb-1">{{ ticket.type.label }}</h6>
-                            <p class="text-muted mb-0 small">{{ ticket.type.description }}</p>
+                            <h6 class="mb-1">{{ item.ticket.label }}</h6>
+                            <p class="text-muted mb-0 small">{{ item.ticket.description }}</p>
                         </div>
                         <div class="col-md-3 text-md-center">
-                            <span class="fw-bold">${% widthratio ticket.type.price 100 1 %}.00</span>
+                            <span class="fw-bold">${% widthratio item.ticket.price 100 1 %}.00</span>
                         </div>
                         <div class="col-md-3">
-                            <input type="number" name="quantity_{{ ticket.type.value }}" id="qty_{{ ticket.type.value }}"
-                                   class="form-control text-center qty-input" value="0" min="0" max="{{ ticket.remaining }}"
-                                   data-price="{{ ticket.type.price }}" {% if ticket.remaining == 0 %}disabled{% endif %}>
+                            <input type="number" name="quantity_{{ item.key }}" id="qty_{{ item.key }}"
+                                   class="form-control text-center qty-input" value="0" min="0" max="{{ item.remaining }}"
+                                   data-price="{{ item.ticket.price }}" {% if item.remaining == 0 %}disabled{% endif %}>
                         </div>
                     </div>
                     {% endfor %}

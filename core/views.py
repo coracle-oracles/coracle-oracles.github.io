@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 
 from django.db.models import Count
 
-from .enums import TicketType
+from .tickets import ticket_types
 from .forms import CustomUserCreationForm
 from .models import Order
 
@@ -55,11 +55,12 @@ def tickets(request):
         ).values_list('ticket_type').annotate(count=Count('id'))
     )
     ticket_data = []
-    for ticket_type in TicketType:
-        existing = existing_counts.get(ticket_type.value, 0)
+    for key, ticket in ticket_types.items():
+        existing = existing_counts.get(key, 0)
         ticket_data.append({
-            'type': ticket_type,
-            'remaining': max(0, ticket_type.max_per_user - existing),
+            'key': key,
+            'ticket': ticket,
+            'remaining': max(0, ticket['max_per_user'] - existing),
         })
     return render(request, 'core/tickets.html', {
         'ticket_data': ticket_data,
@@ -74,15 +75,15 @@ def create_checkout_session(request):
     line_items = []
     tickets_to_create = []
 
-    for ticket_type in TicketType:
-        quantity = int(request.POST.get(f'quantity_{ticket_type.value}', 0))
+    for key, ticket in ticket_types.items():
+        quantity = int(request.POST.get(f'quantity_{key}', 0))
         if quantity > 0:
             line_items.append({
-                'price': ticket_type.price_id,
+                'price': ticket['price_id'],
                 'quantity': quantity,
             })
             for _ in range(quantity):
-                tickets_to_create.append(ticket_type)
+                tickets_to_create.append(key)
 
     if not line_items:
         messages.error(request, 'Please select at least one ticket.')
@@ -97,18 +98,18 @@ def create_checkout_session(request):
     )
 
     requested_counts = {}
-    for ticket_type in tickets_to_create:
-        requested_counts[ticket_type.value] = requested_counts.get(ticket_type.value, 0) + 1
+    for key in tickets_to_create:
+        requested_counts[key] = requested_counts.get(key, 0) + 1
 
-    for ticket_type in TicketType:
-        existing = existing_counts.get(ticket_type.value, 0)
-        requested = requested_counts.get(ticket_type.value, 0)
-        limit = ticket_type.max_per_user
+    for key, ticket in ticket_types.items():
+        existing = existing_counts.get(key, 0)
+        requested = requested_counts.get(key, 0)
+        limit = ticket['max_per_user']
         if existing + requested > limit:
             remaining = max(0, limit - existing)
             messages.error(
                 request,
-                f'You can only have {limit} {ticket_type.label.lower()}s. '
+                f'You can only have {limit} {ticket["label"].lower()}s. '
                 f'You already have {existing}, so you can only purchase {remaining} more.'
             )
             return redirect('tickets')
@@ -127,11 +128,11 @@ def create_checkout_session(request):
     )
 
     # Create pending orders (one per ticket)
-    for ticket_type in tickets_to_create:
+    for key in tickets_to_create:
         Order.objects.create(
             purchasing_user=request.user,
             owning_user=request.user,
-            ticket_type=ticket_type.value,
+            ticket_type=key,
             stripe_checkout_session_id=checkout_session.id,
             status='pending',
         )

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-from .enums import TicketType
+from .tickets import ticket_types
 
 
 class Order(models.Model):
@@ -13,7 +13,7 @@ class Order(models.Model):
 
     purchasing_user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='purchased_orders')
     owning_user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='owned_orders')
-    ticket_type = models.CharField(max_length=100, choices=[(t.value, t.label) for t in TicketType])
+    ticket_type = models.CharField(max_length=100, choices=[(k, v['label']) for k, v in ticket_types.items()])
 
     stripe_checkout_session_id = models.CharField(max_length=255)
     stripe_payment_intent_id = models.CharField(max_length=255, blank=True, null=True)

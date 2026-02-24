@@ -153,7 +153,3 @@ else:
         }
     }
 
-# Stripe Price IDs for each ticket type
-TICKET_PRICE_VEHICLE_PASS = os.environ['TICKET_PRICE_VEHICLE_PASS']
-TICKET_PRICE_TEENAGER = os.environ['TICKET_PRICE_TEENAGER']
-TICKET_PRICE_ADULT = os.environ['TICKET_PRICE_ADULT']

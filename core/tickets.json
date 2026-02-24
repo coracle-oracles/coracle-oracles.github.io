@@ -1,0 +1,23 @@
+{
+  "adult_ticket": {
+    "label": "Adult Ticket",
+    "description": "General admission for adults",
+    "price": 100,
+    "price_id": "price_1T4U2SK9GOXEfTNqNLuPn0Av",
+    "max_per_user": 4
+  },
+  "child_ticket": {
+    "label": "Child Ticket",
+    "description": "General admission for children (12 and under)",
+    "price": 100,
+    "price_id": "price_1T4U2AK9GOXEfTNqqYrHAhff",
+    "max_per_user": 4
+  },
+  "vehicle_pass": {
+    "label": "Vehicle Pass",
+    "description": "Parking pass for one vehicle",
+    "price": 100,
+    "price_id": "price_1T4U2SK9GOXEfTNqNLuPn0Av",
+    "max_per_user": 2
+  }
+}
