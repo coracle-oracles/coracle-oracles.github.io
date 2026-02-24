@@ -1,7 +1,16 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 
 from .tickets import ticket_types
+
+
+class User(AbstractUser):
+    username = None
+    email = models.EmailField(unique=True)
+    name = models.CharField(max_length=255, blank=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['name']
 
 
 class Order(models.Model):
@@ -11,8 +20,8 @@ class Order(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    purchasing_user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='purchased_orders')
-    owning_user = models.ForeignKey(User, on_delete=models.RESTRICT, related_name='owned_orders')
+    purchasing_user = models.ForeignKey('User', on_delete=models.RESTRICT, related_name='purchased_orders')
+    owning_user = models.ForeignKey('User', on_delete=models.RESTRICT, related_name='owned_orders')
     ticket_type = models.CharField(max_length=100, choices=[(k, v['label']) for k, v in ticket_types.items()])
 
     stripe_checkout_session_id = models.CharField(max_length=255)
@@ -26,4 +35,4 @@ class Order(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Order {self.id} - {self.owning_user.username} - {self.ticket_type}"
+        return f"Order {self.id} - {self.owning_user.email} - {self.ticket_type}"
