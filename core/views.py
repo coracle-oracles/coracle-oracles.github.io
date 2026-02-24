@@ -1,12 +1,12 @@
 import json
+
 import stripe
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.conf import settings
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
 from .forms import CustomUserCreationForm
@@ -148,34 +148,3 @@ def checkout_success(request):
 def checkout_cancel(request):
     """Handle cancelled checkout."""
     return render(request, 'core/checkout_cancel.html')
-
-
-@csrf_exempt
-@require_POST
-def stripe_webhook(request):
-    """Handle Stripe webhook events."""
-    payload = request.body
-    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-        )
-    except ValueError:
-        return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError:
-        return HttpResponse(status=400)
-
-    # Handle the checkout.session.completed event
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-
-        try:
-            order = Order.objects.get(stripe_checkout_session_id=session['id'])
-            order.status = 'completed'
-            order.stripe_payment_intent_id = session.get('payment_intent')
-            order.save()
-        except Order.DoesNotExist:
-            pass
-
-    return HttpResponse(status=200)

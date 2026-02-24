@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_tasks_db',
     'core',
 ]
 
@@ -136,7 +137,22 @@ LOGOUT_REDIRECT_URL = 'home'
 # Replace these with your actual Stripe keys
 STRIPE_PUBLISHABLE_KEY = os.environ['STRIPE_PUBLISHABLE_KEY']
 STRIPE_SECRET_KEY = os.environ['STRIPE_SECRET_KEY']
-STRIPE_WEBHOOK_SECRET = os.environ['STRIPE_WEBHOOK_SECRET']
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')  # Optional, only needed if using webhook
+
+# Background tasks configuration
+# Uses ImmediateBackend in debug (runs synchronously), DatabaseBackend in production
+if DEBUG:
+    TASKS = {
+        "default": {
+            "BACKEND": "django.tasks.backends.immediate.ImmediateBackend",
+        }
+    }
+else:
+    TASKS = {
+        "default": {
+            "BACKEND": "django_tasks_db.DatabaseBackend",
+        }
+    }
 
 # Ticket products configuration
 # Each product needs a Stripe Price ID from your Stripe dashboard
