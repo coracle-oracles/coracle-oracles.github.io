@@ -28,29 +28,36 @@ def reconcile_pending_orders(max_age_minutes=60):
     cutoff = timezone.now() - timedelta(minutes=5)
     max_age = timezone.now() - timedelta(minutes=max_age_minutes)
 
-    pending_orders = Order.objects.filter(
+    # Get unique session IDs for pending orders
+    pending_sessions = Order.objects.filter(
         status='pending',
         created_at__lt=cutoff,
         created_at__gt=max_age,
-    )
+    ).values_list('stripe_checkout_session_id', flat=True).distinct()
 
     reconciled = 0
-    for order in pending_orders:
+    for session_id in pending_sessions:
         try:
-            session = stripe.checkout.Session.retrieve(order.stripe_checkout_session_id)
+            session = stripe.checkout.Session.retrieve(session_id)
 
             if session.payment_status == 'paid':
-                order.status = 'completed'
-                order.stripe_payment_intent_id = session.payment_intent
-                order.save()
-                reconciled += 1
-                logger.info(f"Reconciled order {order.id} - marked as completed")
+                updated = Order.objects.filter(
+                    stripe_checkout_session_id=session_id,
+                    status='pending',
+                ).update(
+                    status='completed',
+                    stripe_payment_intent_id=session.payment_intent,
+                )
+                reconciled += updated
+                logger.info(f"Reconciled session {session_id} - marked {updated} orders as completed")
             elif session.status == 'expired':
-                order.status = 'cancelled'
-                order.save()
-                logger.info(f"Reconciled order {order.id} - marked as cancelled (session expired)")
+                updated = Order.objects.filter(
+                    stripe_checkout_session_id=session_id,
+                    status='pending',
+                ).update(status='cancelled')
+                logger.info(f"Reconciled session {session_id} - marked {updated} orders as cancelled (session expired)")
         except stripe.error.StripeError as e:
-            logger.warning(f"Failed to reconcile order {order.id}: {e}")
+            logger.warning(f"Failed to reconcile session {session_id}: {e}")
 
     logger.info(f"Reconciliation complete: {reconciled} orders updated")
 

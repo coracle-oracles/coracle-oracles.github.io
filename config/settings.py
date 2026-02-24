@@ -154,27 +154,12 @@ else:
         }
     }
 
-# Ticket products configuration
-# Each product needs a Stripe Price ID from your Stripe dashboard
+# Stripe Price IDs for each ticket type
+# Get these from your Stripe dashboard
 from core.enums import TicketType
 
-TICKET_PRODUCTS = {
-    TicketType.ADULT: {
-        'name': 'Adult Ticket',
-        'description': 'General admission for adults',
-        'price': 19000,
-        'stripe_price_id': 'price_1Ph2afK9GOXEfTNqpXo4yCHW',
-    },
-    TicketType.CHILD: {
-        'name': 'Child Ticket',
-        'description': 'General admission for children (12 and under)',
-        'price': 8500,
-        'stripe_price_id': 'price_1Ph37UK9GOXEfTNq4Wi3wQKQ',
-    },
-    TicketType.VEHICLE: {
-        'name': 'Vehicle Pass',
-        'description': 'Parking pass for one vehicle',
-        'price': 1500,
-        'stripe_price_id': 'price_1PovwqK9GOXEfTNqFOENLe8Y',
-    },
+STRIPE_PRICE_IDS = {
+    TicketType.ADULT: 'price_1Ph2afK9GOXEfTNqpXo4yCHW',
+    TicketType.CHILD: 'price_1Ph37UK9GOXEfTNq4Wi3wQKQ',
+    TicketType.VEHICLE: 'price_1PovwqK9GOXEfTNqFOENLe8Y',
 }

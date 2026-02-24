@@ -1,5 +1,3 @@
-import json
-
 import stripe
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
@@ -9,8 +7,9 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
+from .enums import TicketType
 from .forms import CustomUserCreationForm
-from .models import Order, OrderItem
+from .models import Order
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -47,9 +46,8 @@ def ticket_info(request):
 @login_required
 def tickets(request):
     """Display ticket selection page."""
-    products = settings.TICKET_PRODUCTS
     return render(request, 'core/tickets.html', {
-        'products': products,
+        'ticket_types': TicketType,
         'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
     })
 
@@ -60,28 +58,21 @@ def create_checkout_session(request):
     """Create a Stripe Checkout session and redirect to it."""
     try:
         line_items = []
-        order_items_data = []
+        tickets_to_create = []
 
-        for ticket_type, product in settings.TICKET_PRODUCTS.items():
+        for ticket_type in TicketType:
             quantity = int(request.POST.get(f'quantity_{ticket_type.value}', 0))
             if quantity > 0:
                 line_items.append({
-                    'price': product['stripe_price_id'],
+                    'price': settings.STRIPE_PRICE_IDS[ticket_type],
                     'quantity': quantity,
                 })
-                order_items_data.append({
-                    'product_id': ticket_type.value,
-                    'product_name': product['name'],
-                    'quantity': quantity,
-                    'unit_price': product['price'],
-                })
+                for _ in range(quantity):
+                    tickets_to_create.append(ticket_type)
 
         if not line_items:
             messages.error(request, 'Please select at least one ticket.')
             return redirect('tickets')
-
-        # Calculate total
-        total_amount = sum(item['quantity'] * item['unit_price'] for item in order_items_data)
 
         # Create Stripe Checkout session
         checkout_session = stripe.checkout.Session.create(
@@ -93,26 +84,17 @@ def create_checkout_session(request):
             customer_email=request.user.email,
             metadata={
                 'user_id': request.user.id,
-                'order_items': json.dumps(order_items_data),
             },
         )
 
-        # Create pending order
-        order = Order.objects.create(
-            user=request.user,
-            stripe_checkout_session_id=checkout_session.id,
-            status='pending',
-            total_amount=total_amount,
-        )
-
-        # Create order items
-        for item_data in order_items_data:
-            OrderItem.objects.create(
-                order=order,
-                product_id=item_data['product_id'],
-                product_name=item_data['product_name'],
-                quantity=item_data['quantity'],
-                unit_price=item_data['unit_price'],
+        # Create pending orders (one per ticket)
+        for ticket_type in tickets_to_create:
+            Order.objects.create(
+                purchasing_user=request.user,
+                owning_user=request.user,
+                ticket_type=ticket_type.value,
+                stripe_checkout_session_id=checkout_session.id,
+                status='pending',
             )
 
         return redirect(checkout_session.url)
@@ -128,16 +110,15 @@ def checkout_success(request):
     session_id = request.GET.get('session_id')
     if session_id:
         try:
-            # Update order status
-            order = Order.objects.get(stripe_checkout_session_id=session_id)
-            if order.status == 'pending':
-                session = stripe.checkout.Session.retrieve(session_id)
-                if session.payment_status == 'paid':
-                    order.status = 'completed'
-                    order.stripe_payment_intent_id = session.payment_intent
-                    order.save()
-        except Order.DoesNotExist:
-            pass
+            session = stripe.checkout.Session.retrieve(session_id)
+            if session.payment_status == 'paid':
+                Order.objects.filter(
+                    stripe_checkout_session_id=session_id,
+                    status='pending',
+                ).update(
+                    status='completed',
+                    stripe_payment_intent_id=session.payment_intent,
+                )
         except Exception:
             pass
 
