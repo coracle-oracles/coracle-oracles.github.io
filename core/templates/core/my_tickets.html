@@ -1,0 +1,98 @@
+{% extends 'core/base.html' %}
+{% load core_filters %}
+
+{% block title %}My Tickets - Coracle{% endblock %}
+
+{% block head_content %}
+<h1>My Tickets</h1>
+<span class="subheading">Manage your tickets and transfers</span>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        {% if incoming_transfers %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">Incoming Transfers</h5>
+            </div>
+            <div class="card-body">
+                {% for transfer in incoming_transfers %}
+                <div class="row align-items-center mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="col-md-6">
+                        <h6 class="mb-1">{{ ticket_types|get_item:transfer.order.ticket_type|get_item:"label" }}</h6>
+                        <p class="text-muted mb-0 small">From: {{ transfer.from_user.name }} ({{ transfer.from_user.email }})</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <form method="post" action="{% url 'accept_transfer' transfer.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                        </form>
+                        <form method="post" action="{% url 'reject_transfer' transfer.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Your Tickets</h5>
+            </div>
+            <div class="card-body">
+                {% if owned_tickets %}
+                    {% for order in owned_tickets %}
+                    <div class="row align-items-center mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div class="col-md-6">
+                            <h6 class="mb-1">{{ ticket_types|get_item:order.ticket_type|get_item:"label" }}</h6>
+                            <p class="text-muted mb-0 small">Purchased: {{ order.created_at|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="post" action="{% url 'transfer_ticket' order.id %}" class="row g-2">
+                                {% csrf_token %}
+                                <div class="col">
+                                    <input type="email" name="to_email" class="form-control form-control-sm" placeholder="Recipient email" required>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Transfer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">You don't have any tickets yet. <a href="{% url 'tickets' %}">Buy tickets</a></p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if outgoing_transfers %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Pending Outgoing Transfers</h5>
+            </div>
+            <div class="card-body">
+                {% for transfer in outgoing_transfers %}
+                <div class="row align-items-center mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="col-md-6">
+                        <h6 class="mb-1">{{ ticket_types|get_item:transfer.order.ticket_type|get_item:"label" }}</h6>
+                        <p class="text-muted mb-0 small">To: {{ transfer.to_email }}</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <form method="post" action="{% url 'rescind_transfer' transfer.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Rescind</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

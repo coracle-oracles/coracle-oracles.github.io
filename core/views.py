@@ -1,5 +1,5 @@
 import stripe
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -11,7 +11,7 @@ from django.db.models import Count
 
 from .tickets import ticket_types
 from .forms import CustomUserCreationForm
-from .models import Order
+from .models import Order, Transfer, User
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -165,3 +165,151 @@ def checkout_success(request):
 def checkout_cancel(request):
     """Handle cancelled checkout."""
     return render(request, 'core/checkout_cancel.html')
+
+
+@login_required
+def my_tickets(request):
+    """Display user's tickets and pending transfers."""
+    owned_tickets = Order.objects.filter(
+        owning_user=request.user,
+        status='completed',
+    ).select_related('purchasing_user')
+
+    outgoing_transfers = Transfer.objects.filter(
+        from_user=request.user,
+        status='pending',
+    ).select_related('order')
+
+    incoming_transfers = Transfer.objects.filter(
+        to_email=request.user.email,
+        status='pending',
+    ).select_related('order', 'from_user')
+
+    return render(request, 'core/my_tickets.html', {
+        'owned_tickets': owned_tickets,
+        'outgoing_transfers': outgoing_transfers,
+        'incoming_transfers': incoming_transfers,
+        'ticket_types': ticket_types,
+    })
+
+
+@login_required
+@require_POST
+def transfer_ticket(request, order_id):
+    """Initiate a ticket transfer."""
+    order = get_object_or_404(Order, id=order_id, owning_user=request.user, status='completed')
+
+    # Check if there's already a pending transfer for this order
+    if Transfer.objects.filter(order=order, status='pending').exists():
+        messages.error(request, 'This ticket already has a pending transfer.')
+        return redirect('my_tickets')
+
+    to_email = request.POST.get('to_email', '').strip().lower()
+    if not to_email:
+        messages.error(request, 'Please enter an email address.')
+        return redirect('my_tickets')
+
+    if to_email == request.user.email:
+        messages.error(request, 'You cannot transfer a ticket to yourself.')
+        return redirect('my_tickets')
+
+    # Check if recipient exists
+    to_user = User.objects.filter(email=to_email).first()
+    if not to_user:
+        messages.error(request, 'No user found with that email address.')
+        return redirect('my_tickets')
+
+    # Check recipient's ticket limits
+    existing_count = Order.objects.filter(
+        owning_user=to_user,
+        ticket_type=order.ticket_type,
+        status__in=['completed', 'pending'],
+    ).count()
+    pending_transfers = Transfer.objects.filter(
+        to_email=to_email,
+        order__ticket_type=order.ticket_type,
+        status='pending',
+    ).count()
+    limit = ticket_types[order.ticket_type]['max_per_user']
+    if existing_count + pending_transfers >= limit:
+        messages.error(request, 'The recipient has reached their limit for this ticket type.')
+        return redirect('my_tickets')
+
+    Transfer.objects.create(
+        order=order,
+        from_user=request.user,
+        to_email=to_email,
+        to_user=to_user,
+    )
+
+    messages.success(request, f'Transfer initiated to {to_email}.')
+    return redirect('my_tickets')
+
+
+@login_required
+@require_POST
+def accept_transfer(request, transfer_id):
+    """Accept an incoming transfer."""
+    transfer = get_object_or_404(
+        Transfer,
+        id=transfer_id,
+        to_email=request.user.email,
+        status='pending',
+    )
+
+    # Check ticket limits
+    existing_count = Order.objects.filter(
+        owning_user=request.user,
+        ticket_type=transfer.order.ticket_type,
+        status__in=['completed', 'pending'],
+    ).count()
+    limit = ticket_types[transfer.order.ticket_type]['max_per_user']
+    if existing_count >= limit:
+        messages.error(request, f'You have reached your limit for this ticket type.')
+        return redirect('my_tickets')
+
+    # Complete the transfer
+    transfer.order.owning_user = request.user
+    transfer.order.save()
+
+    transfer.to_user = request.user
+    transfer.status = 'accepted'
+    transfer.save()
+
+    messages.success(request, 'Transfer accepted. The ticket is now yours.')
+    return redirect('my_tickets')
+
+
+@login_required
+@require_POST
+def reject_transfer(request, transfer_id):
+    """Reject an incoming transfer."""
+    transfer = get_object_or_404(
+        Transfer,
+        id=transfer_id,
+        to_email=request.user.email,
+        status='pending',
+    )
+
+    transfer.status = 'rejected'
+    transfer.save()
+
+    messages.success(request, 'Transfer rejected.')
+    return redirect('my_tickets')
+
+
+@login_required
+@require_POST
+def rescind_transfer(request, transfer_id):
+    """Rescind an outgoing transfer."""
+    transfer = get_object_or_404(
+        Transfer,
+        id=transfer_id,
+        from_user=request.user,
+        status='pending',
+    )
+
+    transfer.delete()
+
+    messages.success(request, 'Transfer rescinded.')
+    return redirect('my_tickets')

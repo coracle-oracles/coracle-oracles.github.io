@@ -40,4 +40,11 @@ urlpatterns = [
     path('checkout/create-session/', views.create_checkout_session, name='create_checkout_session'),
     path('checkout/success/', views.checkout_success, name='checkout_success'),
     path('checkout/cancel/', views.checkout_cancel, name='checkout_cancel'),
+
+    # Ticket management
+    path('my-tickets/', views.my_tickets, name='my_tickets'),
+    path('my-tickets/transfer/<int:order_id>/', views.transfer_ticket, name='transfer_ticket'),
+    path('my-tickets/accept/<int:transfer_id>/', views.accept_transfer, name='accept_transfer'),
+    path('my-tickets/reject/<int:transfer_id>/', views.reject_transfer, name='reject_transfer'),
+    path('my-tickets/rescind/<int:transfer_id>/', views.rescind_transfer, name='rescind_transfer'),
 ]
