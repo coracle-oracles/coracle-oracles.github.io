@@ -26,7 +26,17 @@ class TicketType(str, Enum):
     def price(self):
         """Price in cents."""
         return {
-            TicketType.ADULT: 19000,
-            TicketType.CHILD: 8500,
-            TicketType.VEHICLE: 1500,
+            TicketType.ADULT: 100,
+            TicketType.CHILD: 100,
+            TicketType.VEHICLE: 100,
+        }[self]
+
+    @property
+    def price_id(self):
+        """Stripe Price ID from settings."""
+        from django.conf import settings
+        return {
+            TicketType.ADULT: settings.TICKET_PRICE_ADULT,
+            TicketType.CHILD: settings.TICKET_PRICE_TEENAGER,
+            TicketType.VEHICLE: settings.TICKET_PRICE_VEHICLE_PASS,
         }[self]

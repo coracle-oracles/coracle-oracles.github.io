@@ -47,7 +47,7 @@ def ticket_info(request):
 def tickets(request):
     """Display ticket selection page."""
     return render(request, 'core/tickets.html', {
-        'ticket_types': TicketType,
+        'ticket_types': list(TicketType),
         'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
     })
 
@@ -56,52 +56,47 @@ def tickets(request):
 @require_POST
 def create_checkout_session(request):
     """Create a Stripe Checkout session and redirect to it."""
-    try:
-        line_items = []
-        tickets_to_create = []
+    line_items = []
+    tickets_to_create = []
 
-        for ticket_type in TicketType:
-            quantity = int(request.POST.get(f'quantity_{ticket_type.value}', 0))
-            if quantity > 0:
-                line_items.append({
-                    'price': settings.STRIPE_PRICE_IDS[ticket_type],
-                    'quantity': quantity,
-                })
-                for _ in range(quantity):
-                    tickets_to_create.append(ticket_type)
+    for ticket_type in TicketType:
+        quantity = int(request.POST.get(f'quantity_{ticket_type.value}', 0))
+        if quantity > 0:
+            line_items.append({
+                'price': ticket_type.price_id,
+                'quantity': quantity,
+            })
+            for _ in range(quantity):
+                tickets_to_create.append(ticket_type)
 
-        if not line_items:
-            messages.error(request, 'Please select at least one ticket.')
-            return redirect('tickets')
+    if not line_items:
+        messages.error(request, 'Please select at least one ticket.')
+        return redirect('tickets')
 
-        # Create Stripe Checkout session
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=line_items,
-            mode='payment',
-            success_url=request.build_absolute_uri('/checkout/success/') + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=request.build_absolute_uri('/checkout/cancel/'),
-            customer_email=request.user.email,
-            metadata={
-                'user_id': request.user.id,
-            },
+    # Create Stripe Checkout session
+    checkout_session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=line_items,
+        mode='payment',
+        success_url=request.build_absolute_uri('/checkout/success/') + '?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url=request.build_absolute_uri('/checkout/cancel/'),
+        customer_email=request.user.email,
+        metadata={
+            'user_id': request.user.id,
+        },
+    )
+
+    # Create pending orders (one per ticket)
+    for ticket_type in tickets_to_create:
+        Order.objects.create(
+            purchasing_user=request.user,
+            owning_user=request.user,
+            ticket_type=ticket_type.value,
+            stripe_checkout_session_id=checkout_session.id,
+            status='pending',
         )
 
-        # Create pending orders (one per ticket)
-        for ticket_type in tickets_to_create:
-            Order.objects.create(
-                purchasing_user=request.user,
-                owning_user=request.user,
-                ticket_type=ticket_type.value,
-                stripe_checkout_session_id=checkout_session.id,
-                status='pending',
-            )
-
-        return redirect(checkout_session.url)
-
-    except Exception as e:
-        messages.error(request, f'An error occurred: {str(e)}')
-        return redirect('tickets')
+    return redirect(checkout_session.url)
 
 
 @login_required

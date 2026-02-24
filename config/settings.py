@@ -137,7 +137,6 @@ LOGOUT_REDIRECT_URL = 'home'
 # Replace these with your actual Stripe keys
 STRIPE_PUBLISHABLE_KEY = os.environ['STRIPE_PUBLISHABLE_KEY']
 STRIPE_SECRET_KEY = os.environ['STRIPE_SECRET_KEY']
-STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')  # Optional, only needed if using webhook
 
 # Background tasks configuration
 # Uses ImmediateBackend in debug (runs synchronously), DatabaseBackend in production
@@ -155,11 +154,6 @@ else:
     }
 
 # Stripe Price IDs for each ticket type
-# Get these from your Stripe dashboard
-from core.enums import TicketType
-
-STRIPE_PRICE_IDS = {
-    TicketType.ADULT: 'price_1Ph2afK9GOXEfTNqpXo4yCHW',
-    TicketType.CHILD: 'price_1Ph37UK9GOXEfTNq4Wi3wQKQ',
-    TicketType.VEHICLE: 'price_1PovwqK9GOXEfTNqFOENLe8Y',
-}
+TICKET_PRICE_VEHICLE_PASS = os.environ['TICKET_PRICE_VEHICLE_PASS']
+TICKET_PRICE_TEENAGER = os.environ['TICKET_PRICE_TEENAGER']
+TICKET_PRICE_ADULT = os.environ['TICKET_PRICE_ADULT']
