@@ -62,15 +62,15 @@ def create_checkout_session(request):
         line_items = []
         order_items_data = []
 
-        for product_id, product in settings.TICKET_PRODUCTS.items():
-            quantity = int(request.POST.get(f'quantity_{product_id}', 0))
+        for ticket_type, product in settings.TICKET_PRODUCTS.items():
+            quantity = int(request.POST.get(f'quantity_{ticket_type.value}', 0))
             if quantity > 0:
                 line_items.append({
                     'price': product['stripe_price_id'],
                     'quantity': quantity,
                 })
                 order_items_data.append({
-                    'product_id': product_id,
+                    'product_id': ticket_type.value,
                     'product_name': product['name'],
                     'quantity': quantity,
                     'unit_price': product['price'],

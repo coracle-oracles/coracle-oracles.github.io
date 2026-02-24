@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from .enums import TicketType
+
 
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -30,7 +32,7 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product_id = models.CharField(max_length=100)
+    product_id = models.CharField(max_length=100, choices=[(t.value, t.label) for t in TicketType])
     product_name = models.CharField(max_length=255)
     quantity = models.PositiveIntegerField()
     unit_price = models.IntegerField(help_text='Unit price in cents')
