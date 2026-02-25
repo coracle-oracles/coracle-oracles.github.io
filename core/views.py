@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from django.db.models import Count
 
 from .forms import CustomUserCreationForm
-from .models import Event, Order, TicketType, Transfer, User
+from .models import Event, Order, TicketType, Transfer, User, Role, Shift, ShiftAssignment
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -326,3 +326,204 @@ def rescind_transfer(request, transfer_id):
 
     messages.success(request, 'Transfer rescinded.')
     return redirect('my_tickets')
+
+
+@login_required
+def shifts(request):
+    """Display shift signup page with a table of roles and hours."""
+    from datetime import timedelta
+
+    event = Event.get_active()
+    if not event:
+        messages.error(request, 'No active event.')
+        return redirect('home')
+
+    roles = Role.objects.filter(event=event).prefetch_related(
+        'shifts__assignments__user'
+    )
+
+    # Check if user has a ticket for this event
+    has_ticket = Order.objects.filter(
+        ticket_type__event=event,
+        owning_user=request.user,
+        status='completed',
+    ).exists()
+
+    # Count user's current shifts for this event
+    user_shift_count = ShiftAssignment.objects.filter(
+        user=request.user,
+        shift__role__event=event
+    ).count()
+    can_signup_more = event.max_shifts_per_user == 0 or user_shift_count < event.max_shifts_per_user
+
+    if not roles.exists():
+        return render(request, 'core/shifts.html', {
+            'event': event,
+            'roles': [],
+            'grid': [],
+            'hours': [],
+            'has_ticket': has_ticket,
+            'user_shift_count': user_shift_count,
+            'can_signup_more': can_signup_more,
+        })
+
+    # Collect all shifts and find time boundaries
+    all_shifts = Shift.objects.filter(role__event=event).select_related('role').prefetch_related('assignments__user')
+
+    if not all_shifts.exists():
+        return render(request, 'core/shifts.html', {
+            'event': event,
+            'roles': roles,
+            'grid': [],
+            'hours': [],
+            'has_ticket': has_ticket,
+            'user_shift_count': user_shift_count,
+            'can_signup_more': can_signup_more,
+        })
+
+    min_time = min(s.start_time for s in all_shifts)
+    max_time = max(s.end_time for s in all_shifts)
+
+    # Round to hour boundaries
+    min_hour = min_time.replace(minute=0, second=0, microsecond=0)
+    max_hour = max_time.replace(minute=0, second=0, microsecond=0)
+    if max_time > max_hour:
+        max_hour += timedelta(hours=1)
+
+    # Build list of hours
+    hours = []
+    current = min_hour
+    while current < max_hour:
+        hours.append(current)
+        current += timedelta(hours=1)
+
+    # Build a mapping of (role_id, hour) -> shift for quick lookup
+    # A shift covers all hours from start to end
+    role_hour_shift = {}
+    for shift in all_shifts:
+        shift_start_hour = shift.start_time.replace(minute=0, second=0, microsecond=0)
+        shift_end_hour = shift.end_time.replace(minute=0, second=0, microsecond=0)
+        if shift.end_time > shift_end_hour:
+            shift_end_hour += timedelta(hours=1)
+
+        current = shift_start_hour
+        while current < shift_end_hour:
+            role_hour_shift[(shift.role_id, current)] = shift
+            current += timedelta(hours=1)
+
+    # Get user's current assignments
+    user_assignments = set(
+        ShiftAssignment.objects.filter(
+            user=request.user,
+            shift__role__event=event
+        ).values_list('shift_id', flat=True)
+    )
+
+    # Build the grid
+    # Each row is an hour, each cell is either:
+    # - {'type': 'empty'} - no shift
+    # - {'type': 'shift_start', 'shift': shift, 'rowspan': N, 'is_signed_up': bool} - start of a shift
+    # - {'type': 'shift_continue'} - continuation (skip rendering)
+    grid = []
+    for hour in hours:
+        row = {'hour': hour, 'cells': []}
+        for role in roles:
+            shift = role_hour_shift.get((role.id, hour))
+            if shift is None:
+                row['cells'].append({'type': 'empty'})
+            else:
+                # Check if this is the start hour of the shift
+                shift_start_hour = shift.start_time.replace(minute=0, second=0, microsecond=0)
+                if hour == shift_start_hour:
+                    # Calculate rowspan (number of hours)
+                    shift_end_hour = shift.end_time.replace(minute=0, second=0, microsecond=0)
+                    if shift.end_time > shift_end_hour:
+                        shift_end_hour += timedelta(hours=1)
+                    rowspan = int((shift_end_hour - shift_start_hour).total_seconds() // 3600)
+
+                    row['cells'].append({
+                        'type': 'shift_start',
+                        'shift': shift,
+                        'rowspan': rowspan,
+                        'is_signed_up': shift.id in user_assignments,
+                    })
+                else:
+                    row['cells'].append({'type': 'shift_continue'})
+        grid.append(row)
+
+    return render(request, 'core/shifts.html', {
+        'event': event,
+        'roles': roles,
+        'grid': grid,
+        'hours': hours,
+        'has_ticket': has_ticket,
+        'user_shift_count': user_shift_count,
+        'can_signup_more': can_signup_more,
+    })
+
+
+@login_required
+@require_POST
+def shift_signup(request, shift_id):
+    """Sign up for a shift."""
+    event = Event.get_active()
+    if not event:
+        messages.error(request, 'No active event.')
+        return redirect('home')
+
+    # Check if user has a ticket for this event
+    has_ticket = Order.objects.filter(
+        ticket_type__event=event,
+        owning_user=request.user,
+        status='completed',
+    ).exists()
+    if not has_ticket:
+        messages.error(request, 'You must have a ticket to sign up for shifts.')
+        return redirect('shifts')
+
+    # Check shift limit
+    if event.max_shifts_per_user > 0:
+        user_shift_count = ShiftAssignment.objects.filter(
+            user=request.user,
+            shift__role__event=event
+        ).count()
+        if user_shift_count >= event.max_shifts_per_user:
+            messages.error(request, f'You have reached the maximum of {event.max_shifts_per_user} shifts.')
+            return redirect('shifts')
+
+    shift = get_object_or_404(Shift, id=shift_id, role__event=event)
+
+    # Check if already signed up
+    if ShiftAssignment.objects.filter(shift=shift, user=request.user).exists():
+        messages.error(request, 'You are already signed up for this shift.')
+        return redirect('shifts')
+
+    # Check capacity
+    if shift.spots_remaining <= 0:
+        messages.error(request, 'This shift is full.')
+        return redirect('shifts')
+
+    ShiftAssignment.objects.create(shift=shift, user=request.user)
+    messages.success(request, f'You have signed up for {shift}.')
+    return redirect('shifts')
+
+
+@login_required
+@require_POST
+def shift_cancel(request, shift_id):
+    """Cancel shift signup."""
+    event = Event.get_active()
+    if not event:
+        messages.error(request, 'No active event.')
+        return redirect('home')
+
+    shift = get_object_or_404(Shift, id=shift_id, role__event=event)
+
+    assignment = ShiftAssignment.objects.filter(shift=shift, user=request.user).first()
+    if not assignment:
+        messages.error(request, 'You are not signed up for this shift.')
+        return redirect('shifts')
+
+    assignment.delete()
+    messages.success(request, f'You have cancelled your signup for {shift}.')
+    return redirect('shifts')

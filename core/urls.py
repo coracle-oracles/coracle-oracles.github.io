@@ -47,4 +47,9 @@ urlpatterns = [
     path('my-tickets/accept/<int:transfer_id>/', views.accept_transfer, name='accept_transfer'),
     path('my-tickets/reject/<int:transfer_id>/', views.reject_transfer, name='reject_transfer'),
     path('my-tickets/rescind/<int:transfer_id>/', views.rescind_transfer, name='rescind_transfer'),
+
+    # Shifts
+    path('shifts/', views.shifts, name='shifts'),
+    path('shifts/signup/<int:shift_id>/', views.shift_signup, name='shift_signup'),
+    path('shifts/cancel/<int:shift_id>/', views.shift_cancel, name='shift_cancel'),
 ]

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Event, Order, TicketType, Transfer, User
+from .models import Event, Order, Role, Shift, ShiftAssignment, TicketType, Transfer, User
 
 
 class TicketTypeInline(admin.TabularInline):
@@ -59,3 +59,42 @@ class TransferAdmin(admin.ModelAdmin):
     list_filter = ('status',)
     search_fields = ('from_user__email', 'to_email')
     ordering = ('-created_at',)
+
+
+class ShiftInline(admin.TabularInline):
+    model = Shift
+    extra = 1
+
+
+@admin.register(Role)
+class RoleAdmin(admin.ModelAdmin):
+    list_display = ('name', 'event')
+    list_filter = ('event',)
+    search_fields = ('name',)
+    ordering = ('event', 'name')
+    inlines = [ShiftInline]
+
+
+class ShiftAssignmentInline(admin.TabularInline):
+    model = ShiftAssignment
+    extra = 1
+
+
+@admin.register(Shift)
+class ShiftAdmin(admin.ModelAdmin):
+    list_display = ('role', 'start_time', 'end_time', 'capacity', 'spots_remaining')
+    list_filter = ('role__event', 'role')
+    ordering = ('start_time',)
+    inlines = [ShiftAssignmentInline]
+
+    def spots_remaining(self, obj):
+        return obj.spots_remaining
+    spots_remaining.short_description = 'Spots Remaining'
+
+
+@admin.register(ShiftAssignment)
+class ShiftAssignmentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'shift', 'created_at')
+    list_filter = ('shift__role__event', 'shift__role')
+    search_fields = ('user__email', 'user__name')
+    ordering = ('shift__start_time',)

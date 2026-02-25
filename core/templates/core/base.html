@@ -104,6 +104,7 @@
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="{% url 'my_tickets' %}">My Tickets</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'shifts' %}">Shifts</a></li>
                                     <li>
                                         <form method="post" action="{% url 'logout' %}">
                                             {% csrf_token %}

@@ -36,6 +36,7 @@ class Event(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     is_active = models.BooleanField(default=False)
+    max_shifts_per_user = models.PositiveIntegerField(default=0, help_text='Maximum shifts per user (0 = unlimited)')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -122,3 +123,54 @@ class Transfer(models.Model):
 
     def __str__(self):
         return f"Transfer {self.id} - {self.order} -> {self.to_email}"
+
+
+class Role(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='roles')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = [['event', 'name']]
+
+    def __str__(self):
+        return f"{self.name} ({self.event.name})"
+
+
+class Shift(models.Model):
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='shifts')
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    capacity = models.PositiveIntegerField(default=1)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['start_time']
+        unique_together = [['role', 'start_time', 'end_time']]
+
+    def __str__(self):
+        return f"{self.role.name} - {self.start_time.strftime('%b %d, %I:%M %p')} to {self.end_time.strftime('%I:%M %p')}"
+
+    @property
+    def spots_remaining(self):
+        return self.capacity - self.assignments.count()
+
+
+class ShiftAssignment(models.Model):
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, related_name='assignments')
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='shift_assignments')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [['shift', 'user']]
+        ordering = ['shift__start_time']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.shift}"
