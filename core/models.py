@@ -33,6 +33,31 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['name']
 
 
+class Event(models.Model):
+    name = models.CharField(max_length=255)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-start_date']
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if self.is_active:
+            Event.objects.filter(is_active=True).exclude(pk=self.pk).update(is_active=False)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_active(cls):
+        return cls.objects.filter(is_active=True).first()
+
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -40,6 +65,7 @@ class Order(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
+    event = models.ForeignKey(Event, on_delete=models.RESTRICT, related_name='orders')
     purchasing_user = models.ForeignKey('User', on_delete=models.RESTRICT, related_name='purchased_orders')
     owning_user = models.ForeignKey('User', on_delete=models.RESTRICT, related_name='owned_orders')
     ticket_type = models.CharField(max_length=100, choices=[(k, v['label']) for k, v in ticket_types.items()])
