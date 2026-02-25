@@ -1,7 +1,12 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Event, Order, Transfer, User
+from .models import Event, Order, TicketType, Transfer, User
+
+
+class TicketTypeInline(admin.TabularInline):
+    model = TicketType
+    extra = 1
 
 
 @admin.register(Event)
@@ -10,6 +15,15 @@ class EventAdmin(admin.ModelAdmin):
     list_filter = ('is_active',)
     search_fields = ('name',)
     ordering = ('-start_date',)
+    inlines = [TicketTypeInline]
+
+
+@admin.register(TicketType)
+class TicketTypeAdmin(admin.ModelAdmin):
+    list_display = ('label', 'event', 'name', 'price', 'max_per_user')
+    list_filter = ('event',)
+    search_fields = ('label', 'name')
+    ordering = ('event', 'name')
 
 
 @admin.register(User)
@@ -33,8 +47,8 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'event', 'owning_user', 'ticket_type', 'status', 'created_at')
-    list_filter = ('event', 'ticket_type', 'status')
+    list_display = ('id', 'ticket_type', 'owning_user', 'status', 'created_at')
+    list_filter = ('ticket_type__event', 'ticket_type', 'status')
     search_fields = ('owning_user__email', 'purchasing_user__email')
     ordering = ('-created_at',)
 

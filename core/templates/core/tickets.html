@@ -21,16 +21,16 @@
                     {% for item in ticket_data %}
                     <div class="row align-items-center mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
                         <div class="col-md-6">
-                            <h6 class="mb-1">{{ item.ticket.label }}</h6>
-                            <p class="text-muted mb-0 small">{{ item.ticket.description }}</p>
+                            <h6 class="mb-1">{{ item.ticket_type.label }}</h6>
+                            <p class="text-muted mb-0 small">{{ item.ticket_type.description }}</p>
                         </div>
                         <div class="col-md-3 text-md-center">
-                            <span class="fw-bold">${% widthratio item.ticket.price 100 1 %}.00</span>
+                            <span class="fw-bold">${% widthratio item.ticket_type.price 100 1 %}.00</span>
                         </div>
                         <div class="col-md-3">
-                            <input type="number" name="quantity_{{ item.key }}" id="qty_{{ item.key }}"
+                            <input type="number" name="quantity_{{ item.ticket_type.id }}" id="qty_{{ item.ticket_type.id }}"
                                    class="form-control text-center qty-input" value="0" min="0" max="{{ item.remaining }}"
-                                   data-price="{{ item.ticket.price }}" {% if item.remaining == 0 %}disabled{% endif %}>
+                                   data-price="{{ item.ticket_type.price }}" {% if item.remaining == 0 %}disabled{% endif %}>
                         </div>
                     </div>
                     {% endfor %}

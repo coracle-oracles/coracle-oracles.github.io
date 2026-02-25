@@ -1,5 +1,4 @@
 {% extends 'core/base.html' %}
-{% load core_filters %}
 
 {% block title %}My Tickets - Coracle{% endblock %}
 
@@ -20,7 +19,7 @@
                 {% for transfer in incoming_transfers %}
                 <div class="row align-items-center mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
                     <div class="col-md-6">
-                        <h6 class="mb-1">{{ ticket_types|get_item:transfer.order.ticket_type|get_item:"label" }}</h6>
+                        <h6 class="mb-1">{{ transfer.order.ticket_type.label }}</h6>
                         <p class="text-muted mb-0 small">From: {{ transfer.from_user.name }} ({{ transfer.from_user.email }})</p>
                     </div>
                     <div class="col-md-6 text-md-end">
@@ -48,7 +47,7 @@
                     {% for order in owned_tickets %}
                     <div class="row align-items-center mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
                         <div class="col-md-6">
-                            <h6 class="mb-1">{{ ticket_types|get_item:order.ticket_type|get_item:"label" }}</h6>
+                            <h6 class="mb-1">{{ order.ticket_type.label }}</h6>
                             <p class="text-muted mb-0 small">Purchased: {{ order.created_at|date:"M d, Y" }}</p>
                         </div>
                         <div class="col-md-6">
@@ -79,7 +78,7 @@
                 {% for transfer in outgoing_transfers %}
                 <div class="row align-items-center mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
                     <div class="col-md-6">
-                        <h6 class="mb-1">{{ ticket_types|get_item:transfer.order.ticket_type|get_item:"label" }}</h6>
+                        <h6 class="mb-1">{{ transfer.order.ticket_type.label }}</h6>
                         <p class="text-muted mb-0 small">To: {{ transfer.to_email }}</p>
                     </div>
                     <div class="col-md-6 text-md-end">

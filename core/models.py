@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
-from .tickets import ticket_types
-
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -58,6 +56,26 @@ class Event(models.Model):
         return cls.objects.filter(is_active=True).first()
 
 
+class TicketType(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='ticket_types')
+    name = models.CharField(max_length=100)
+    label = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    price = models.PositiveIntegerField(help_text='Price in cents')
+    stripe_price_id = models.CharField(max_length=255)
+    max_per_user = models.PositiveIntegerField(default=4)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = [['event', 'name']]
+
+    def __str__(self):
+        return f"{self.label} ({self.event.name})"
+
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -65,10 +83,9 @@ class Order(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
-    event = models.ForeignKey(Event, on_delete=models.RESTRICT, related_name='orders')
+    ticket_type = models.ForeignKey(TicketType, on_delete=models.RESTRICT, related_name='orders')
     purchasing_user = models.ForeignKey('User', on_delete=models.RESTRICT, related_name='purchased_orders')
     owning_user = models.ForeignKey('User', on_delete=models.RESTRICT, related_name='owned_orders')
-    ticket_type = models.CharField(max_length=100, choices=[(k, v['label']) for k, v in ticket_types.items()])
 
     stripe_checkout_session_id = models.CharField(max_length=255)
     stripe_payment_intent_id = models.CharField(max_length=255, blank=True, null=True)
@@ -81,7 +98,7 @@ class Order(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Order {self.id} - {self.owning_user.email} - {self.ticket_type}"
+        return f"Order {self.id} - {self.owning_user.email} - {self.ticket_type.label}"
 
 
 class Transfer(models.Model):

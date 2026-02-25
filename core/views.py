@@ -9,9 +9,8 @@ from django.views.decorators.http import require_POST
 
 from django.db.models import Count
 
-from .tickets import ticket_types
 from .forms import CustomUserCreationForm
-from .models import Event, Order, Transfer, User
+from .models import Event, Order, TicketType, Transfer, User
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -55,18 +54,17 @@ def tickets(request):
 
     existing_counts = dict(
         Order.objects.filter(
-            event=event,
+            ticket_type__event=event,
             owning_user=request.user,
             status__in=['completed', 'pending'],
-        ).values_list('ticket_type').annotate(count=Count('id'))
+        ).values_list('ticket_type_id').annotate(count=Count('id'))
     )
     ticket_data = []
-    for key, ticket in ticket_types.items():
-        existing = existing_counts.get(key, 0)
+    for ticket_type in event.ticket_types.all():
+        existing = existing_counts.get(ticket_type.id, 0)
         ticket_data.append({
-            'key': key,
-            'ticket': ticket,
-            'remaining': max(0, ticket['max_per_user'] - existing),
+            'ticket_type': ticket_type,
+            'remaining': max(0, ticket_type.max_per_user - existing),
         })
     return render(request, 'core/tickets.html', {
         'event': event,
@@ -87,15 +85,15 @@ def create_checkout_session(request):
     line_items = []
     tickets_to_create = []
 
-    for key, ticket in ticket_types.items():
-        quantity = int(request.POST.get(f'quantity_{key}', 0))
+    for ticket_type in event.ticket_types.all():
+        quantity = int(request.POST.get(f'quantity_{ticket_type.id}', 0))
         if quantity > 0:
             line_items.append({
-                'price': ticket['price_id'],
+                'price': ticket_type.stripe_price_id,
                 'quantity': quantity,
             })
             for _ in range(quantity):
-                tickets_to_create.append(key)
+                tickets_to_create.append(ticket_type)
 
     if not line_items:
         messages.error(request, 'Please select at least one ticket.')
@@ -104,25 +102,24 @@ def create_checkout_session(request):
     # Check ticket limits per user for this event
     existing_counts = dict(
         Order.objects.filter(
-            event=event,
+            ticket_type__event=event,
             owning_user=request.user,
             status__in=['completed', 'pending'],
-        ).values('ticket_type').annotate(count=Count('id')).values_list('ticket_type', 'count')
+        ).values('ticket_type_id').annotate(count=Count('id')).values_list('ticket_type_id', 'count')
     )
 
     requested_counts = {}
-    for key in tickets_to_create:
-        requested_counts[key] = requested_counts.get(key, 0) + 1
+    for ticket_type in tickets_to_create:
+        requested_counts[ticket_type.id] = requested_counts.get(ticket_type.id, 0) + 1
 
-    for key, ticket in ticket_types.items():
-        existing = existing_counts.get(key, 0)
-        requested = requested_counts.get(key, 0)
-        limit = ticket['max_per_user']
-        if existing + requested > limit:
-            remaining = max(0, limit - existing)
+    for ticket_type in event.ticket_types.all():
+        existing = existing_counts.get(ticket_type.id, 0)
+        requested = requested_counts.get(ticket_type.id, 0)
+        if existing + requested > ticket_type.max_per_user:
+            remaining = max(0, ticket_type.max_per_user - existing)
             messages.error(
                 request,
-                f'You can only have {limit} {ticket["label"].lower()}s. '
+                f'You can only have {ticket_type.max_per_user} {ticket_type.label.lower()}s. '
                 f'You already have {existing}, so you can only purchase {remaining} more.'
             )
             return redirect('tickets')
@@ -141,12 +138,11 @@ def create_checkout_session(request):
     )
 
     # Create pending orders (one per ticket)
-    for key in tickets_to_create:
+    for ticket_type in tickets_to_create:
         Order.objects.create(
-            event=event,
+            ticket_type=ticket_type,
             purchasing_user=request.user,
             owning_user=request.user,
-            ticket_type=key,
             stripe_checkout_session_id=checkout_session.id,
             status='pending',
         )
@@ -187,29 +183,28 @@ def my_tickets(request):
     event = Event.get_active()
 
     owned_tickets = Order.objects.filter(
-        event=event,
+        ticket_type__event=event,
         owning_user=request.user,
         status='completed',
-    ).select_related('purchasing_user') if event else Order.objects.none()
+    ).select_related('ticket_type', 'purchasing_user') if event else Order.objects.none()
 
     outgoing_transfers = Transfer.objects.filter(
-        order__event=event,
+        order__ticket_type__event=event,
         from_user=request.user,
         status='pending',
-    ).select_related('order') if event else Transfer.objects.none()
+    ).select_related('order__ticket_type') if event else Transfer.objects.none()
 
     incoming_transfers = Transfer.objects.filter(
-        order__event=event,
+        order__ticket_type__event=event,
         to_email=request.user.email,
         status='pending',
-    ).select_related('order', 'from_user') if event else Transfer.objects.none()
+    ).select_related('order__ticket_type', 'from_user') if event else Transfer.objects.none()
 
     return render(request, 'core/my_tickets.html', {
         'event': event,
         'owned_tickets': owned_tickets,
         'outgoing_transfers': outgoing_transfers,
         'incoming_transfers': incoming_transfers,
-        'ticket_types': ticket_types,
     })
 
 
@@ -241,19 +236,16 @@ def transfer_ticket(request, order_id):
 
     # Check recipient's ticket limits for this event
     existing_count = Order.objects.filter(
-        event=order.event,
-        owning_user=to_user,
         ticket_type=order.ticket_type,
+        owning_user=to_user,
         status__in=['completed', 'pending'],
     ).count()
     pending_transfers = Transfer.objects.filter(
-        order__event=order.event,
         to_email=to_email,
         order__ticket_type=order.ticket_type,
         status='pending',
     ).count()
-    limit = ticket_types[order.ticket_type]['max_per_user']
-    if existing_count + pending_transfers >= limit:
+    if existing_count + pending_transfers >= order.ticket_type.max_per_user:
         messages.error(request, 'The recipient has reached their limit for this ticket type.')
         return redirect('my_tickets')
 
@@ -281,13 +273,11 @@ def accept_transfer(request, transfer_id):
 
     # Check ticket limits for this event
     existing_count = Order.objects.filter(
-        event=transfer.order.event,
-        owning_user=request.user,
         ticket_type=transfer.order.ticket_type,
+        owning_user=request.user,
         status__in=['completed', 'pending'],
     ).count()
-    limit = ticket_types[transfer.order.ticket_type]['max_per_user']
-    if existing_count >= limit:
+    if existing_count >= transfer.order.ticket_type.max_per_user:
         messages.error(request, 'You have reached your limit for this ticket type.')
         return redirect('my_tickets')
 
